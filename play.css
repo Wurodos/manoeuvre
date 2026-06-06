@@ -1,0 +1,122 @@
+@font-face { font-family: "Albert Text"; src: url('fonts/AlbertText-Bold.woff2') format('woff2') }
+
+main {
+	user-select: none;
+	background-color: #666;
+	background-image: url(background.png);
+	box-shadow: inset 0 0 8px #0008;
+}
+
+#role_Red { background-color: hsl(359,100%,75%); }
+#role_Blue { background-color: hsl(220,100%,80%); }
+
+#chat_text .Red { background-color: var(--red) }
+#chat_text .Blue { background-color: var(--blue) }
+
+body.Observer #hand { display: none }
+
+#map {
+	display: grid;
+  	grid-template-columns: repeat(2, 410px); 
+  	grid-template-rows: repeat(2, 410px); 
+ 
+}
+
+.checked::before { content: "\2714  " }
+.unchecked::before { content: "\2714  "; color: transparent; }
+.action { cursor: pointer; }
+
+.section {
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-color: #f0e9e9;
+	width: 205px;
+	height: 205px;
+	background-size: 205px 205px;
+	border: 1px solid black;
+	border-radius: 16px;
+}
+
+.section.map {
+	width: 410px;
+	height: 410px;
+	background-size: 410px 410px;
+	border: 0px;
+	border-radius: 0px;
+}
+
+.section.selected { box-shadow: 0 0 0 3px cyan; }
+
+.section.s0 {background-image: none;}
+
+.section.s1 { background-image: url(images/Map/Map1.jpg) }
+.section.s2 { background-image: url(images/Map/Map2.jpg) }
+.section.s3 { background-image: url(images/Map/Map3.jpg) }
+.section.s4 { background-image: url(images/Map/Map4.jpg) }
+.section.s5 { background-image: url(images/Map/Map5.jpg) }
+.section.s6 { background-image: url(images/Map/Map6.jpg) }
+.section.s7 { background-image: url(images/Map/Map7.jpg) }
+.section.s8 { background-image: url(images/Map/Map8.jpg) }
+.section.s9 { background-image: url(images/Map/Map9.jpg) }
+.section.s10 { background-image: url(images/Map/Map10.jpg) }
+.section.s11 { background-image: url(images/Map/Map11.jpg) }
+.section.s12 { background-image: url(images/Map/Map12.jpg) }
+.section.s13 { background-image: url(images/Map/Map13.jpg) }
+.section.s14 { background-image: url(images/Map/Map14.jpg) }
+.section.s15 { background-image: url(images/Map/Map15.jpg) }
+.section.s16 { background-image: url(images/Map/Map16.jpg) }
+.section.s17 { background-image: url(images/Map/Map17.jpg) }
+.section.s18 { background-image: url(images/Map/Map18.jpg) }
+.section.s19 { background-image: url(images/Map/Map19.jpg) }
+.section.s20 { background-image: url(images/Map/Map20.jpg) }
+.section.s21 { background-image: url(images/Map/Map21.jpg) }
+.section.s22 { background-image: url(images/Map/Map22.jpg) }
+.section.s23 { background-image: url(images/Map/Map23.jpg) }
+.section.s24 { background-image: url(images/Map/Map24.jpg) }
+
+/* LOG */
+
+#log { background-color: whitesmoke }
+
+#log .h1 {
+	margin: 6px 0;
+	padding: 2px 8px;
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
+	background-color: hsl(0,0%,85%);
+}
+
+#log .h1.x { background-color: hsl(0,0%,85%); }
+#log .h1.r { background-color: hsl(359,85%,85%); }
+#log .h1.b { background-color: hsl(220,85%,85%); }
+
+#log .t, #log .c, #log .o {
+	display: inline-block;
+	vertical-align: -2px;
+	width: 11px;
+	height: 11px;
+	border: 1px solid #222;
+}
+
+#log .c { border-radius: 50%; }
+#log .o { border-radius: 0 0 50% 50%; }
+
+#log .o.secrecy { width: 7px; height: 7px; margin: 2px 2px; border-radius: 0; border-color: white; }
+
+#log .c.white { background-color: hsl(0,0%,94%) }
+#log .c.red { background-color: hsl(359,85%,50%) }
+#log .c.blue { background-color: hsl(220,85%,55%) }
+
+#log .t.gold { background-color: hsl(50,81%,59%); }
+#log .t.blue { background-color: hsl(201,80%,47%); }
+#log .t.white { background-color: hsl(0,0%,94%); }
+#log .t.red { background-color: hsl(0,90%,49%); }
+#log .t.green {  background-color: hsl(125,21%,43%); }
+#log .t.black {  background-color: hsl(0,0%,15%); }
+
+#log .o.secrecy {  background-color: hsl(0,0%,15%); }
+#log .o.gold { background-color: hsl(50,81%,59%); }
+#log .o.blue { background-color: hsl(201,80%,47%); }
+#log .o.white { background-color: hsl(0,0%,94%); }
+#log .o.red { background-color: hsl(0,90%,49%); }
+#log .o.purple { background-color: hsl(296,29%,50%); }

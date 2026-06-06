@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width,
+		height=device-height,
+		user-scalable=no,
+		interactive-widget=resizes-content,
+		viewport-fit=cover">
+	<meta name="theme-color" content="#444">
+	<meta charset="UTF-8">
+	<title>
+		Manoeuvre
+	</title>
+	<link rel="icon" href="favicon.svg">
+	<link rel="stylesheet" href="/fonts/fonts.css">
+	<link rel="stylesheet" href="/common/client.css">
+	<link rel="stylesheet" href="world.css">
+	<link rel="stylesheet" href="play.css">
+	<script defer src="/common/client.js"></script>
+	<script defer src="world.js"></script>
+	<script defer src="play.js"></script>
+</head>
+<body>
+
+<header>
+	<div id="toolbar">
+		<details>
+			<summary><img src="/images/cog.svg"></summary>
+			<menu>
+				<li><a href="info/rules.html" target="_blank">Rules</a>
+			</menu>
+		</details>
+	</div>
+</header>
+
+<aside>
+	<div id="roles"></div>
+	<div id="log"></div>
+</aside>
+
+<main data-min-zoom="0.5" data-max-zoom="2.0">
+	<div id="map">
+		<div class="section map" id = "section-map-0"></div>
+		<div class="section map" id = "section-map-1"></div>
+		<div class="section map" id = "section-map-2"></div>
+		<div class="section map" id = "section-map-3"></div>
+	</div>
+
+	<div id="hands">
+		<div class="panel" id="sections">
+			<div class="panel-head">Map sections</div>
+			<div class="panel-body"></div>
+		</div>
+		<div class="panel" id="hand">
+			<div class="panel-head">Player hand</div>
+			<div class="panel-body"></div>
+		</div>
+	</div>
+</main>
+
+<footer id="status"></footer>
+
+</body>
