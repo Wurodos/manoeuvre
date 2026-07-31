@@ -14,6 +14,37 @@ const T_SWAMP = 4
 const T_FIELD = 5
 const T_LAKE = 6
 
+// Card Types
+
+const C_REDOUBT = 0
+const C_SUPPLY = 1
+const C_FORCED_MARCH = 2
+const C_WITHDRAW = 3
+const C_ENGINEERS_SAPPERS = 4
+const C_SPY_SCOUT = 5
+const C_LEADER = 6
+const C_UNIT = 7
+const C_SKIRMISH = 8
+const C_REGROUP = 9
+const C_AMBUSH = 10
+const C_COMMITED_ATTACK = 11
+const C_GUERILLA = 12
+
+// Edges
+
+const EDGE_NORTH = 0
+const EDGE_EAST = 1
+const EDGE_SOUTH = 2
+const EDGE_WEST = 3
+
+
+const UNIT_STARTING_SPACES = {
+	[EDGE_NORTH]: Array(64).fill(false).map((_, i) => i < 16),
+	[EDGE_SOUTH]: Array(64).fill(false).map((_, i) => i >= 48),
+	[EDGE_EAST]: Array(64).fill(false).map((_, i) =>  i % 8 >= 6),
+	[EDGE_WEST]: Array(64).fill(false).map((_, i) => i % 8 <= 1)
+}
+
 // Nations
 
 const N_FRANCE = "France"
@@ -25,6 +56,16 @@ const N_SPAIN = "Spain"
 const N_OTTOMAN_EMPIRE = "Ottoman Empire"
 const N_UNITED_STATES = "United States"
 
+const NATION_COLORS = {
+	[N_FRANCE]: "rgb(38, 0, 255)",
+	[N_GREAT_BRITAIN]: "rgb(255, 24, 24)"
+}
+
+const NATION_SHORT = {
+	[N_FRANCE]: "FR",
+	[N_GREAT_BRITAIN]: "GB"
+}
+
 const ROLES = ["First", "Second"]
 const SCENARIOS = []
 const state = {}
@@ -33,6 +74,8 @@ const procedures = {}
 
 var G, L, R, V = {}
 const P = {}
+
+const data = require("./data.js")
 
 
 P.game = script(`
@@ -43,9 +86,12 @@ P.game = script(`
 P.setup = script(`
 	call pick_boards
 	call pick_nations
-	call draw_cards
-	call pick_side
-	call place_units
+	call pick_edge
+	call fill_hand
+
+	call pick_unit
+	call pick_legal_space
+
 	return
 `)
 
@@ -70,6 +116,21 @@ P.pick_nations = {
 
 	nation(n) {
 		G.nations[R] = n
+
+		G.decks[R] = data.decks[n].slice()
+		G.decks[R] = prepare_deck(G.decks[R])
+
+		for (const unit_stats of data.units[n]) {
+			G.units[R].push({
+				stats: unit_stats,
+				is_reduced: false,
+				row: -1,
+				column: -1
+			})
+		}
+
+		shuffle(G.decks[R])
+
 		array_delete_item(L.left_to_pick, n)
 
 		if (R == R_FIRST) {
@@ -80,17 +141,119 @@ P.pick_nations = {
 	},
 }
 
-P.pick_side = {
-	_begin() {
 
+// Adds necessary copies of cards, makes image URLs
+function prepare_deck(deck) {
+	const full_deck = []
+
+	for (let c of deck) {
+		const card = object_copy(c)
+		const copies = card.copies || 1
+
+		if (!card.image_id) 
+			card.image_id = get_image_id(card.type)
+
+		card.image_id = "images/Cards" + NATION_SHORT[G.nations[R]] + "/" + card.image_id + ".JPG"
+
+		for (let i = 0; i < copies; i++) {
+			full_deck.push(card)
+		}
+	}
+
+	return full_deck
+}
+
+function get_image_id(card_type) {
+	switch(card_type) {
+		case C_AMBUSH: return "Ambush"
+		case C_COMMITED_ATTACK: return "CommitedAttack"
+		case C_ENGINEERS_SAPPERS: return "EngineersSappers"
+		case C_FORCED_MARCH: return "FMarch"
+		case C_GUERILLA: return "Guerilla"
+		case C_REDOUBT: return "Redoubt"
+		case C_REGROUP: return "Regroup"
+		case C_SKIRMISH: return "Skirmish"
+		case C_SPY_SCOUT: return "SpyScout"
+		case C_SUPPLY: return "Supply"
+		case C_WITHDRAW: return "Withdraw"
+	}
+}
+
+P.pick_edge = {
+	
+	prompt() {
+		prompt(`Pick your starting edge of the map`)
+		button("north")
+		button("south")
+		button("east")
+		button("west")
 	},
 
-	prompt() {
-		prompt(`Pick your starting side of the map`)
+	north() {
+		G.starting_edges[R_SECOND] = EDGE_NORTH
+		G.starting_edges[R_FIRST] = EDGE_SOUTH
+		end()
+	},
+
+	south() {
+		G.starting_edges[R_SECOND] = EDGE_SOUTH
+		G.starting_edges[R_FIRST] = EDGE_NORTH
+		end()
+	},
+
+	east() {
+		G.starting_edges[R_SECOND] = EDGE_EAST
+		G.starting_edges[R_FIRST] = EDGE_WEST
+		end()
+	},
+
+	west() {
+		G.starting_edges[R_SECOND] = EDGE_WEST
+		G.starting_edges[R_FIRST] = EDGE_EAST
+		end()
 	},
 }
 
-P.draw_cards = function() {
+P.pick_unit = {
+	prompt() {
+		prompt(`Pick unit`)
+		for (let i = 1; i <= 8; i++) {
+			action("unit", i)
+		}
+	},
+
+	unit(u) {
+		G.active_unit = u
+
+		G.is_space_active = UNIT_STARTING_SPACES[G.starting_edges[G.active]]
+		end()
+	},
+}
+
+P.pick_legal_space = {
+	prompt() {
+		prompt(`Pick space`)
+
+		for (let i = 1; i <= 64; i++) {
+			if (G.is_space_active[i-1])
+				action("mapspace", i)
+		}
+	},
+
+	mapspace(m) {
+		const unit = G.units[R][G.active_unit]
+		unit.mapspace = m
+		unit.row = Math.floor((m-1) / 8)
+		unit.column = ((m-1) % 8)+1
+	}
+}
+
+P.fill_hand = function() {
+	
+	while (G.hands[G.active].length < 5) {
+		G.hands[G.active].push(G.decks[G.active].pop())
+	}
+
 	end()
 }
 
@@ -139,7 +302,6 @@ P.pick_boards = {
 }
 
 
-
 function on_setup(scenario, options) {
 	G.active = R_FIRST
 
@@ -147,7 +309,12 @@ function on_setup(scenario, options) {
 	G.section_rotations = [0,0,0,0]
 	G.nations = [null, null]
 	G.hands = [[],[]]
-	
+	G.decks = [[],[]]
+	G.units = [[],[]]
+	G.active_unit = -1
+	G.starting_edges = [-1,-1]
+
+	G.is_space_active = Array(64).fill(false)
 
 	call("game")
 }
@@ -161,7 +328,30 @@ function on_view() {
 	V.sections = G.sections
 	V.section_rotations = G.section_rotations
 
+	V.starting_edges = G.starting_edges
 	V.nations = G.nations
+	V.border_colors = ""
+	
+	if (G.starting_edges[0] > -1) {
+		var colors = Array(4).fill("rgb(0,0,0,0)")
+		colors[G.starting_edges[R_FIRST]] = NATION_COLORS[G.nations[R_FIRST]]
+		colors[G.starting_edges[R_SECOND]] = NATION_COLORS[G.nations[R_SECOND]]
+		
+		
+		for (var i = 0; i < 4; i++) {
+			V.border_colors += colors[i] + " "
+		}
+	}
+
+	V.hand = G.hands[R]
+	V.units = G.units
+	V.active_unit = G.active_unit
+
+	if (R === G.active && G.is_space_active) {
+		V.is_space_active = G.is_space_active
+	} else {
+		V.is_space_active = Array(64).fill(false)
+	}// V.units_on_board = G.units.filter(unit => unit.row != -1)
 }
 
 

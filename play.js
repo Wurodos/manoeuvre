@@ -5,6 +5,8 @@ const R_SECOND = 1
 const SECTIONS = 24
 
 const ui = {
+	map: document.getElementById("map"),
+	spaces: document.getElementById("spaces"),
 	section_map: [
 		document.getElementById("section-map-0"),
 		document.getElementById("section-map-1"),
@@ -18,6 +20,8 @@ function on_init() {
 
 	define_panel("#sections", "sections", 0)
 	define_panel("#hand", "hand", 0)
+	define_panel("#units", "units", 0)
+	define_html_thing(ui.spaces, "spaces", 0)
 
 	for (i = 0; i < 4; ++i) {
 		define_html_thing("#section-map-"+i, "section_map", i)
@@ -27,6 +31,19 @@ function on_init() {
 	for (i = 1; i <= SECTIONS; ++i) {
 		define_card("section", i, "s" + i, true)
 	}
+
+	for (i = 1; i <= 5; ++i) {
+		define_card("card", i, "c" + i, true)
+	}
+
+	for (i = 1; i <= 8; ++i) {
+		define_piece("unit", i, "u" + i, true)
+	}
+
+	for (i = 1; i <= 64; i++) {
+		define_thing("mapspace", i)
+			.action()
+	}
 }
 
 function on_update() {
@@ -34,14 +51,45 @@ function on_update() {
 
 	begin_update()
 
-	for (i = 1; i <= SECTIONS; ++i) {
-		populate("sections", 0, "section", i)
+	for (i = 1; i <= V.hand.length; ++i) {
+		populate("hand", 0, "card", i)
+
+		if (V.hand[i-1]) {
+			update_style("card", i, "background-image", `url(${V.hand[i-1].image_id})`)
+		}
+	}
+
+	for (i = 1; i <= 64; i++) {
+	 	populate("spaces", 0, "mapspace", i)
+		update_keyword("mapspace", i, "highlight", V.is_space_active[i-1])
+	}
+
+	for (i = 1; i <= V.units[R].length; ++i) {
+		const unit = V.units[R][i-1];
+		update_style("unit", i, "background-image", `url(${unit.stats.image_id})`)
+
+		if (unit.row == -1) {
+			populate("units", 0, "unit", i)
+			update_keyword("unit", i, "selected", i == V.active_unit)
+		} else {
+			populate("mapspace", unit.mapspace, "unit", i)
+		}
+	}
+
+	
+
+
+	if (V.border_colors.length === 0) {
+		for (i = 1; i <= SECTIONS; ++i) {
+			populate("sections", 0, "section", i)
+		}
+	} else {
+		ui.spaces.style.zIndex = 1
 	}
 
 	for (i of V.sections) {
 		update_keyword("section", i, "selected", V.sections.includes(i))
 	}
-
 	for (i = 0; i < V.sections.length; ++i) {
 		ui.section_map[i].className = "section map s"+V.sections[i]
 		update_rotation("section_map", i, 90*V.section_rotations[i])
@@ -50,14 +98,22 @@ function on_update() {
 		ui.section_map[i].className = "section map s0"
 	}
 
+	ui.map.style.borderColor = V.border_colors
+
 	roles[R_FIRST].stat.innerHTML = V.nations[R_FIRST]? V.nations[R_FIRST]: ""
 	roles[R_SECOND].stat.innerHTML = V.nations[R_SECOND]? V.nations[R_SECOND]: ""
 
 	action_button("fr", "France")
 	action_button("gb", "Great Britain")
 
+	action_button("north", "North")
+	action_button("south", "South")
+	action_button("east", "East")
+	action_button("west", "West")
+
 	action_button("done", "Done")
 	action_button("clear", "Clear")
 	action_button("undo", "Undo")
+	
 	end_update()
 }
