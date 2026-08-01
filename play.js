@@ -32,7 +32,7 @@ function on_init() {
 		define_card("section", i, "s" + i, true)
 	}
 
-	for (i = 1; i <= 5; ++i) {
+	for (i = 0; i < 5; ++i) {
 		define_card("card", i, "c" + i, true)
 	}
 
@@ -51,10 +51,10 @@ function on_update() {
 
 	begin_update()
 
-	for (i = 1; i <= V.hand.length; ++i) {
+	for (i = 0; i < V.hand.length; ++i) {
 		populate("hand", 0, "card", i)
 
-		update_style("card", i, "background-image", `url(${V.hand[i-1].image_id})`)
+		update_style("card", i, "background-image", `url(${V.hand[i].image_id})`)
 	}
 
 	for (i = 1; i <= 64; i++) {

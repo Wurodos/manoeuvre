@@ -122,8 +122,8 @@ P.restoration_phase = {
 P.combat_phase = {
 	prompt() {
 		prompt(`You may initiate one combat by playing a card`)
-		for (let i = 1; i <= G.hands[R].length; i++) {
-			if (G.hands[R][i-1].type === C_UNIT)
+		for (let i = 0; i < G.hands[R].length; i++) {
+			if (G.hands[R][i].type === C_UNIT)
 				action("card", i)
 		}
 		button("done")
@@ -205,7 +205,7 @@ P.discard_phase = {
 	prompt() {
 		prompt(`You may discard any of your cards`)
 
-		for (let i = 1; i <= G.hands[R].length; i++) {
+		for (let i = 0; i < G.hands[R].length; i++) {
 			action("card", i)
 		}
 		button("done")
@@ -216,8 +216,8 @@ P.discard_phase = {
 	},
 
 	card(c) {
-		G.discards[R].push(G.hands[R][c-1])
-		array_delete(G.hands[R], c-1)
+		G.discards[R].push(G.hands[R][c])
+		array_delete(G.hands[R], c)
 	}
 }
 
