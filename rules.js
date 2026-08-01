@@ -37,13 +37,14 @@ const EDGE_EAST = 1
 const EDGE_SOUTH = 2
 const EDGE_WEST = 3
 
-
 const UNIT_STARTING_SPACES = {
 	[EDGE_NORTH]: Array(64).fill(false).map((_, i) => i < 16),
 	[EDGE_SOUTH]: Array(64).fill(false).map((_, i) => i >= 48),
 	[EDGE_EAST]: Array(64).fill(false).map((_, i) =>  i % 8 >= 6),
 	[EDGE_WEST]: Array(64).fill(false).map((_, i) => i % 8 <= 1)
 }
+
+
 
 // Nations
 
@@ -80,6 +81,14 @@ const data = require("./data.js")
 
 P.game = script(`
 	call setup
+	while true {
+		call discard_phase
+		call fill_hand
+		call move_phase
+		call combat_phase
+		call restoration_phase
+		set G.active 1-G.active
+	}
 `)
 
 // TODO draft nations
@@ -87,13 +96,130 @@ P.setup = script(`
 	call pick_boards
 	call pick_nations
 	call pick_edge
-	call fill_hand
 
-	call pick_unit
-	call pick_legal_space
+	call fill_hand
+	call place_units
+	set G.active R_FIRST
+	
+	call fill_hand
+	call place_units
+
 
 	return
 `)
+
+P.restoration_phase = {
+	prompt() {
+		prompt(`You may restore one unit by playing a card`)
+		button("done")
+	},
+
+	done() {
+		end()
+	}
+}
+
+P.combat_phase = {
+	prompt() {
+		prompt(`You may initiate one combat by playing a card`)
+		for (let i = 1; i <= G.hands[R].length; i++) {
+			if (G.hands[R][i-1].type === C_UNIT)
+				action("card", i)
+		}
+		button("done")
+	},
+
+	card(c) {
+
+	},
+
+	done() {
+		end()
+	}
+}
+
+P.move_phase = {
+	_begin() {
+		L.movement_left = 0
+		L.units_left_to_move = 1
+	},
+
+	prompt() {
+		if (L.units_left_to_move > 0) {
+			prompt(`You may move one of your units`)
+			for (let i = 1; i <= G.units[R].length; i++) {
+				action("unit", i)
+			}
+		} else {
+			// TODO 'Supply' card
+			prompt(`Proceed to combat phase`)
+		}
+		button("done")
+	},
+
+	_resume() {
+		clear_undo()
+		G.units[R][G.active_unit-1].mapspace = L.$
+		L.movement_left--
+
+		if (L.movement_left > 0) {
+			this.pick_adjacent()
+		} else {
+			G.active_unit = -1
+			G.is_space_legal = Array(64).fill(false)
+			L.units_left_to_move--
+		}
+	},
+
+	unit(u) {
+		push_undo()
+		G.active_unit = u
+		L.movement_left = G.units[R][G.active_unit-1].stats.is_cavalry? 2: 1
+		this.pick_adjacent()
+	},
+
+	pick_adjacent() {
+		G.is_space_legal = Array(64).fill(false)
+		for (const adj of get_adjacent_spaces(G.units[R][G.active_unit-1].mapspace)) {
+			if (!get_unit_in_space(adj))
+				G.is_space_legal[adj-1] = true
+		}
+		call("pick_legal_space")
+	},
+
+	done() {
+		end()
+	}
+}
+
+function get_adjacent_spaces(space) {
+	const adj = []
+	if (space % 8 != 0) adj.push(space+1)
+	if (space % 8 != 1) adj.push(space-1)
+	if (space > 8) adj.push(space-8)
+	if (space < 57) adj.push(space+8)
+	return adj
+}
+
+P.discard_phase = {
+	prompt() {
+		prompt(`You may discard any of your cards`)
+
+		for (let i = 1; i <= G.hands[R].length; i++) {
+			action("card", i)
+		}
+		button("done")
+	},
+
+	done() {
+		end()
+	},
+
+	card(c) {
+		G.discards[R].push(G.hands[R][c-1])
+		array_delete(G.hands[R], c-1)
+	}
+}
 
 P.pick_nations = {
 	_begin() {
@@ -124,8 +250,7 @@ P.pick_nations = {
 			G.units[R].push({
 				stats: unit_stats,
 				is_reduced: false,
-				row: -1,
-				column: -1
+				mapspace: -1
 			})
 		}
 
@@ -214,20 +339,54 @@ P.pick_edge = {
 	},
 }
 
-P.pick_unit = {
+P.place_units = {
 	prompt() {
-		prompt(`Pick unit`)
+		var all_placed = true
 		for (let i = 1; i <= 8; i++) {
 			action("unit", i)
+			if (G.units[R][i-1].mapspace === -1)
+				all_placed = false
 		}
+
+		if (all_placed) {
+			prompt(`Press "Done" or keep moving units`)
+			button("done")
+		} else prompt(`Pick unit`)
+		
+	},
+
+	_resume() {
+		const unit = G.units[R][G.active_unit - 1]
+		unit.mapspace = L.$
+		G.is_space_legal = Array(64).fill(false)
+		G.active_unit = -1
+	},
+
+	done() {
+		clear_undo()
+		end()
 	},
 
 	unit(u) {
 		G.active_unit = u
 
-		G.is_space_active = UNIT_STARTING_SPACES[G.starting_edges[G.active]]
-		end()
+		G.is_space_legal = UNIT_STARTING_SPACES[G.starting_edges[G.active]].map((legal, i) => legal && !get_unit_in_space(i+1))
+		call("pick_legal_space")
 	},
+}
+
+function get_unit_in_space(space) {
+	for (let i = 0; i < G.units[R_FIRST].length; i++) {
+		const unit = G.units[R_FIRST][i];
+		if (unit.mapspace === space) return unit
+	}
+
+	for (let i = 0; i < G.units[R_SECOND].length; i++) {
+		const unit = G.units[R_SECOND][i];
+		if (unit.mapspace === space) return unit
+	}
+
+	return null
 }
 
 P.pick_legal_space = {
@@ -235,22 +394,25 @@ P.pick_legal_space = {
 		prompt(`Pick space`)
 
 		for (let i = 1; i <= 64; i++) {
-			if (G.is_space_active[i-1])
+			if (G.is_space_legal[i-1])
 				action("mapspace", i)
 		}
 	},
 
 	mapspace(m) {
-		const unit = G.units[R][G.active_unit]
-		unit.mapspace = m
-		unit.row = Math.floor((m-1) / 8)
-		unit.column = ((m-1) % 8)+1
+		end(m)
 	}
 }
 
 P.fill_hand = function() {
 	
 	while (G.hands[G.active].length < 5) {
+		if (G.decks[G.active].length == 0) {
+			G.has_reshuffled[G.active] = true
+			G.decks[G.active] = G.discard[G.active]
+			G.discard[G.active] = []
+			shuffle(G.decks[G.active])
+		}
 		G.hands[G.active].push(G.decks[G.active].pop())
 	}
 
@@ -305,16 +467,21 @@ P.pick_boards = {
 function on_setup(scenario, options) {
 	G.active = R_FIRST
 
+	G.has_reshuffled = [false, false]
+
 	G.sections = []
 	G.section_rotations = [0,0,0,0]
 	G.nations = [null, null]
 	G.hands = [[],[]]
 	G.decks = [[],[]]
+	G.discards = [[],[]]
 	G.units = [[],[]]
+	G.dead_units = [[],[]]
+
 	G.active_unit = -1
 	G.starting_edges = [-1,-1]
 
-	G.is_space_active = Array(64).fill(false)
+	G.is_space_legal = Array(64).fill(false)
 
 	call("game")
 }
@@ -325,6 +492,8 @@ function on_static_view() {}
 
 
 function on_view() {
+	V.active = G.active
+
 	V.sections = G.sections
 	V.section_rotations = G.section_rotations
 
@@ -347,10 +516,10 @@ function on_view() {
 	V.units = G.units
 	V.active_unit = G.active_unit
 
-	if (R === G.active && G.is_space_active) {
-		V.is_space_active = G.is_space_active
+	if (R === G.active && G.is_space_legal) {
+		V.is_space_legal = G.is_space_legal
 	} else {
-		V.is_space_active = Array(64).fill(false)
+		V.is_space_legal = Array(64).fill(false)
 	}// V.units_on_board = G.units.filter(unit => unit.row != -1)
 }
 

@@ -36,7 +36,7 @@ function on_init() {
 		define_card("card", i, "c" + i, true)
 	}
 
-	for (i = 1; i <= 8; ++i) {
+	for (i = 1; i <= 16; ++i) {
 		define_piece("unit", i, "u" + i, true)
 	}
 
@@ -54,25 +54,34 @@ function on_update() {
 	for (i = 1; i <= V.hand.length; ++i) {
 		populate("hand", 0, "card", i)
 
-		if (V.hand[i-1]) {
-			update_style("card", i, "background-image", `url(${V.hand[i-1].image_id})`)
-		}
+		update_style("card", i, "background-image", `url(${V.hand[i-1].image_id})`)
 	}
 
 	for (i = 1; i <= 64; i++) {
 	 	populate("spaces", 0, "mapspace", i)
-		update_keyword("mapspace", i, "highlight", V.is_space_active[i-1])
+		update_keyword("mapspace", i, "highlight", V.is_space_legal[i-1])
 	}
 
 	for (i = 1; i <= V.units[R].length; ++i) {
 		const unit = V.units[R][i-1];
 		update_style("unit", i, "background-image", `url(${unit.stats.image_id})`)
-
-		if (unit.row == -1) {
-			populate("units", 0, "unit", i)
+		
+		if (V.active === R)
 			update_keyword("unit", i, "selected", i == V.active_unit)
+
+		if (unit.mapspace == -1) {
+			populate("units", 0, "unit", i)
 		} else {
 			populate("mapspace", unit.mapspace, "unit", i)
+		}
+	}
+
+	for (i = 1; i <= V.units[1-R].length; ++i) {
+		const unit = V.units[1-R][i-1];
+		update_style("unit", 8+i, "background-image", `url(${unit.stats.image_id})`)
+
+		if (unit.mapspace != -1) {
+			populate("mapspace", unit.mapspace, "unit", 8+i)
 		}
 	}
 

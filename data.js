@@ -126,12 +126,14 @@ const data = module.exports = {
             {
                 name: "1st Foot Guards",
                 id: GB_1_FOOT,
+                image_id: "images/UnitsGB/1Foot.png",
                 strength_full: 8,
                 strength_reduced: 4,
             },
             {
                 name: "King's Dragoons Guards",
                 id: GB_KING_DRG,
+                image_id: "images/UnitsGB/KDrg.png",
                 strength_full: 8,
                 strength_reduced: 4,
                 is_cavalry: true
@@ -139,18 +141,21 @@ const data = module.exports = {
             {
                 name: "4th Regiment of Foot",
                 id: GB_4_FOOT,
+                image_id: "images/UnitsGB/4Foot.png",
                 strength_full: 7,
                 strength_reduced: 3,
             },
             {
                 name: "9th Queen's Royal Guards",
                 id: GB_9_QUEEN,
+                image_id: "images/UnitsGB/QnRoy.png",
                 strength_full: 7,
                 strength_reduced: 3,
                 is_cavalry: true
             },
             {
                 name: "32nd Regiment of Foot",
+                image_id: "images/UnitsGB/32Foot.png",
                 id: GB_32_FOOT,
                 strength_full: 6,
                 strength_reduced: 3,
@@ -158,18 +163,21 @@ const data = module.exports = {
             {
                 name: "42nd Regiment of Foot",
                 id: GB_42_FOOT,
+                image_id: "images/UnitsGB/42Foot.png",
                 strength_full: 6,
                 strength_reduced: 4,
             },
             {
                 name: "52nd Regiment of Foot",
                 id: GB_52_FOOT,
+                image_id: "images/UnitsGB/52Foot.png",
                 strength_full: 6,
                 strength_reduced: 3,
             },
             {
                 name: "Dutch-Belgians",
                 id: GB_DUTCH,
+                image_id: "images/UnitsGB/Dutch.png",
                 strength_full: 5,
                 strength_reduced: 3,
             },
