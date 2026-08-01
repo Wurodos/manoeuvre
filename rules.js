@@ -424,7 +424,7 @@ P.pick_boards = {
 		prompt(`Pick 4 sections (${4 - G.sections.length} left). You can rotate them by left-clicking`)
 
 		if (G.sections.length < 4) {
-			for (let i = 1; i <= 24; i++) 
+			for (let i = 0; i < 24; i++) 
 				if (!G.sections.includes(i))
 					action("section", i)
 		}

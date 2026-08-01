@@ -28,8 +28,8 @@ function on_init() {
 			.action()
 	}
 
-	for (i = 1; i <= SECTIONS; ++i) {
-		define_card("section", i, "s" + i, true)
+	for (i = 0; i < SECTIONS; ++i) {
+		define_card("section", i, "s" + (i+1), true)
 	}
 
 	for (i = 0; i < 5; ++i) {
@@ -89,7 +89,7 @@ function on_update() {
 
 
 	if (V.border_colors.length === 0) {
-		for (i = 1; i <= SECTIONS; ++i) {
+		for (i = 0; i < SECTIONS; ++i) {
 			populate("sections", 0, "section", i)
 		}
 	} else {
@@ -100,7 +100,7 @@ function on_update() {
 		update_keyword("section", i, "selected", V.sections.includes(i))
 	}
 	for (i = 0; i < V.sections.length; ++i) {
-		ui.section_map[i].className = "section map s"+V.sections[i]
+		ui.section_map[i].className = "section map s"+(V.sections[i]+1)
 		update_rotation("section_map", i, 90*V.section_rotations[i])
 	}
 	for (i = V.sections.length; i < 4; ++i) {
