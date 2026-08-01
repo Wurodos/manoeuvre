@@ -147,7 +147,7 @@ P.move_phase = {
 	prompt() {
 		if (L.units_left_to_move > 0) {
 			prompt(`You may move one of your units`)
-			for (let i = 1; i <= G.units[R].length; i++) {
+			for (let i = 0; i < G.units[R].length; i++) {
 				action("unit", i)
 			}
 		} else {
@@ -159,7 +159,7 @@ P.move_phase = {
 
 	_resume() {
 		clear_undo()
-		G.units[R][G.active_unit-1].mapspace = L.$
+		G.units[R][G.active_unit].mapspace = L.$
 		L.movement_left--
 
 		if (L.movement_left > 0) {
@@ -174,13 +174,13 @@ P.move_phase = {
 	unit(u) {
 		push_undo()
 		G.active_unit = u
-		L.movement_left = G.units[R][G.active_unit-1].stats.is_cavalry? 2: 1
+		L.movement_left = G.units[R][G.active_unit].stats.is_cavalry? 2: 1
 		this.pick_adjacent()
 	},
 
 	pick_adjacent() {
 		G.is_space_legal = Array(64).fill(false)
-		for (const adj of get_adjacent_spaces(G.units[R][G.active_unit-1].mapspace)) {
+		for (const adj of get_adjacent_spaces(G.units[R][G.active_unit].mapspace)) {
 			if (!get_unit_in_space(adj))
 				G.is_space_legal[adj-1] = true
 		}
@@ -342,9 +342,9 @@ P.pick_edge = {
 P.place_units = {
 	prompt() {
 		var all_placed = true
-		for (let i = 1; i <= 8; i++) {
+		for (let i = 0; i < 8; i++) {
 			action("unit", i)
-			if (G.units[R][i-1].mapspace === -1)
+			if (G.units[R][i].mapspace === -1)
 				all_placed = false
 		}
 
@@ -356,7 +356,7 @@ P.place_units = {
 	},
 
 	_resume() {
-		const unit = G.units[R][G.active_unit - 1]
+		const unit = G.units[R][G.active_unit]
 		unit.mapspace = L.$
 		G.is_space_legal = Array(64).fill(false)
 		G.active_unit = -1
@@ -520,7 +520,7 @@ function on_view() {
 		V.is_space_legal = G.is_space_legal
 	} else {
 		V.is_space_legal = Array(64).fill(false)
-	}// V.units_on_board = G.units.filter(unit => unit.row != -1)
+	}
 }
 
 

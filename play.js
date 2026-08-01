@@ -36,7 +36,7 @@ function on_init() {
 		define_card("card", i, "c" + i, true)
 	}
 
-	for (i = 1; i <= 16; ++i) {
+	for (i = 0; i < 16; ++i) {
 		define_piece("unit", i, "u" + i, true)
 	}
 
@@ -62,8 +62,8 @@ function on_update() {
 		update_keyword("mapspace", i, "highlight", V.is_space_legal[i-1])
 	}
 
-	for (i = 1; i <= V.units[R].length; ++i) {
-		const unit = V.units[R][i-1];
+	for (i = 0; i < V.units[R].length; ++i) {
+		const unit = V.units[R][i];
 		update_style("unit", i, "background-image", `url(${unit.stats.image_id})`)
 		
 		if (V.active === R)
@@ -76,8 +76,8 @@ function on_update() {
 		}
 	}
 
-	for (i = 1; i <= V.units[1-R].length; ++i) {
-		const unit = V.units[1-R][i-1];
+	for (i = 0; i < V.units[1-R].length; ++i) {
+		const unit = V.units[1-R][i];
 		update_style("unit", 8+i, "background-image", `url(${unit.stats.image_id})`)
 
 		if (unit.mapspace != -1) {
