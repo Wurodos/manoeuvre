@@ -40,7 +40,7 @@ function on_init() {
 		define_piece("unit", i, "u" + i, true)
 	}
 
-	for (i = 1; i <= 64; i++) {
+	for (i = 0; i < 64; i++) {
 		define_thing("mapspace", i)
 			.action()
 	}
@@ -57,9 +57,9 @@ function on_update() {
 		update_style("card", i, "background-image", `url(${V.hand[i].image_id})`)
 	}
 
-	for (i = 1; i <= 64; i++) {
+	for (i = 0; i < 64; i++) {
 	 	populate("spaces", 0, "mapspace", i)
-		update_keyword("mapspace", i, "highlight", V.is_space_legal[i-1])
+		update_keyword("mapspace", i, "highlight", V.is_space_legal[i])
 	}
 
 	for (i = 0; i < V.units[R].length; ++i) {

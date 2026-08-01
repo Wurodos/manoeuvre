@@ -182,7 +182,7 @@ P.move_phase = {
 		G.is_space_legal = Array(64).fill(false)
 		for (const adj of get_adjacent_spaces(G.units[R][G.active_unit].mapspace)) {
 			if (!get_unit_in_space(adj))
-				G.is_space_legal[adj-1] = true
+				G.is_space_legal[adj] = true
 		}
 		call("pick_legal_space")
 	},
@@ -194,10 +194,10 @@ P.move_phase = {
 
 function get_adjacent_spaces(space) {
 	const adj = []
-	if (space % 8 != 0) adj.push(space+1)
-	if (space % 8 != 1) adj.push(space-1)
-	if (space > 8) adj.push(space-8)
-	if (space < 57) adj.push(space+8)
+	if (space % 8 != 7) adj.push(space+1)
+	if (space % 8 != 0) adj.push(space-1)
+	if (space > 7) adj.push(space-8)
+	if (space < 56) adj.push(space+8)
 	return adj
 }
 
@@ -370,7 +370,7 @@ P.place_units = {
 	unit(u) {
 		G.active_unit = u
 
-		G.is_space_legal = UNIT_STARTING_SPACES[G.starting_edges[G.active]].map((legal, i) => legal && !get_unit_in_space(i+1))
+		G.is_space_legal = UNIT_STARTING_SPACES[G.starting_edges[G.active]].map((legal, i) => legal && !get_unit_in_space(i))
 		call("pick_legal_space")
 	},
 }
@@ -393,8 +393,8 @@ P.pick_legal_space = {
 	prompt() {
 		prompt(`Pick space`)
 
-		for (let i = 1; i <= 64; i++) {
-			if (G.is_space_legal[i-1])
+		for (let i = 0; i < 64; i++) {
+			if (G.is_space_legal[i])
 				action("mapspace", i)
 		}
 	},
