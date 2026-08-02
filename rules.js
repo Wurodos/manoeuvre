@@ -38,10 +38,10 @@ const EDGE_SOUTH = 2
 const EDGE_WEST = 3
 
 const UNIT_STARTING_SPACES = {
-	[EDGE_NORTH]: Array(64).fill(false).map((_, i) => i < 16),
-	[EDGE_SOUTH]: Array(64).fill(false).map((_, i) => i >= 48),
-	[EDGE_EAST]: Array(64).fill(false).map((_, i) =>  i % 8 >= 6),
-	[EDGE_WEST]: Array(64).fill(false).map((_, i) => i % 8 <= 1)
+	[EDGE_NORTH]: empty_board().map((_, i) => i < 16),
+	[EDGE_SOUTH]: empty_board().map((_, i) => i >= 48),
+	[EDGE_EAST]: empty_board().map((_, i) =>  i % 8 >= 6),
+	[EDGE_WEST]: empty_board().map((_, i) => i % 8 <= 1)
 }
 
 
@@ -77,6 +77,10 @@ var G, L, R, V = {}
 const P = {}
 
 const data = require("./data.js")
+
+function empty_board() {
+	return Array(64).fill(false)
+}
 
 
 P.game = script(`
@@ -120,22 +124,67 @@ P.restoration_phase = {
 }
 
 P.combat_phase = {
+
+	_begin() {
+		L.did_combat = false
+	},
+
 	prompt() {
-		prompt(`You may initiate one combat by playing a card`)
-		for (let i = 0; i < G.hands[R].length; i++) {
-			if (G.hands[R][i].type === C_UNIT)
-				action("card", i)
+
+		if (L.did_combat) {
+			prompt(`Proceed to restoration phase`)
+		} else {
+			prompt(`You may initiate one combat by playing a card`)
+			for (let i = 0; i < G.hands[R].length; i++) {
+				const card = G.hands[R][i]
+				if (card.type === C_UNIT && card.attack)
+					action("card", i)
+			}
 		}
 		button("done")
 	},
 
 	card(c) {
-
+		const unit = find_unit(G.hands[R][c].unit)
+		if (unit) {
+			call("select_target_unit", {card: G.hands[R][c], attacker: unit, range: 1})
+		}
 	},
 
 	done() {
 		end()
 	}
+}
+
+P.select_target_unit = {
+
+	prompt() {
+		prompt(`Pick enemy unit for attack`)
+
+		for (let i = 0; i < G.units[1-R].length; i++) {
+			const unit = G.units[1-R][i]
+			if (distance(L.attacker.mapspace, unit.mapspace) <= L.range) {
+				action("unit", i+8)
+			}			
+		}
+	},
+
+	unit(u) {
+		end()
+	}
+}
+
+function find_unit(id) {
+	for (let i = 0; i < G.units[R].length; i++) {
+		const unit = G.units[R][i];
+		if (unit.stats.id === id)
+			return unit
+	}
+	return null
+}
+
+function distance(s1, s2) {
+	return Math.abs(s1%8 - s2%8) + Math.abs(Math.floor(s1/8) - Math.floor(s2/8))
 }
 
 P.move_phase = {
@@ -162,11 +211,16 @@ P.move_phase = {
 		G.units[R][G.active_unit].mapspace = L.$
 		L.movement_left--
 
+		if (G.terrain[L.$] === T_FIELD || G.terrain[L.$] === T_SWAMP)
+			L.movement_left = 0
+
 		if (L.movement_left > 0) {
 			this.pick_adjacent()
 		} else {
+			// TODO 'Forced March' card
+			
 			G.active_unit = -1
-			G.is_space_legal = Array(64).fill(false)
+			G.is_space_legal = empty_board()
 			L.units_left_to_move--
 		}
 	},
@@ -179,9 +233,9 @@ P.move_phase = {
 	},
 
 	pick_adjacent() {
-		G.is_space_legal = Array(64).fill(false)
+		G.is_space_legal = empty_board()
 		for (const adj of get_adjacent_spaces(G.units[R][G.active_unit].mapspace)) {
-			if (!get_unit_in_space(adj))
+			if (!get_unit_in_space(adj) && G.terrain[adj] != T_LAKE)
 				G.is_space_legal[adj] = true
 		}
 		call("pick_legal_space")
@@ -358,7 +412,7 @@ P.place_units = {
 	_resume() {
 		const unit = G.units[R][G.active_unit]
 		unit.mapspace = L.$
-		G.is_space_legal = Array(64).fill(false)
+		G.is_space_legal = empty_board()
 		G.active_unit = -1
 	},
 
@@ -370,7 +424,7 @@ P.place_units = {
 	unit(u) {
 		G.active_unit = u
 
-		G.is_space_legal = UNIT_STARTING_SPACES[G.starting_edges[G.active]].map((legal, i) => legal && !get_unit_in_space(i))
+		G.is_space_legal = UNIT_STARTING_SPACES[G.starting_edges[G.active]].map((legal, i) => legal && !get_unit_in_space(i) && G.terrain[i] != T_LAKE)
 		call("pick_legal_space")
 	},
 }
@@ -439,6 +493,7 @@ P.pick_boards = {
 
 	done() {
 		clear_undo()
+		construct_terrain()
 		end()
 	},
 
@@ -463,11 +518,56 @@ P.pick_boards = {
 	}
 }
 
+function construct_terrain() {
+	for (let i = 0; i < 4; i++) {
+		const section_terrain = data.sections[G.sections[i]]
+
+		const rotated_terrain = section_terrain.slice()
+		for (let j = 0; j < G.section_rotations[i]; j++) {
+			rotate_matrix_inplace(rotated_terrain)
+		}
+
+		for (let j = 0; j < 16; j++) {
+			// some math to transpose section indexes to the entire board
+			const delta = 32*Math.floor(i/2) + 4*(i%2) + 4*Math.floor(j/4)
+			G.terrain[j+delta] = rotated_terrain[j]
+		}
+	}
+
+
+	// DEBUG Terrain
+	for (let i = 0; i < 8; i++) {
+		let message = ""
+		for (let j = 0; j < 8; j++) {
+			message += G.terrain[8*i+j] + " "
+		}
+		log(message)
+	}
+}
+
+function rotate_matrix_inplace(matrix) {
+	for (let i = 0; i < 4; i++) {
+		for (let j = i + 1; j < 4; j++) {
+	    	[matrix[4*i+j], matrix[4*j+i]] = [matrix[4*j+i], matrix[4*i+j]];
+		}
+	}
+	for (let i = 0; i < 4; i++) {
+		[matrix[4*i], matrix[4*i+3]] = [matrix[4*i+3], matrix[4*i]];
+		[matrix[4*i+1], matrix[4*i+2]] = [matrix[4*i+2], matrix[4*i+1]];
+	}
+}
+
 
 function on_setup(scenario, options) {
 	G.active = R_FIRST
 
 	G.has_reshuffled = [false, false]
+
+	G.combat = {
+		attacker: null,
+		defender: null,
+		card: null
+	}
 
 	G.sections = []
 	G.section_rotations = [0,0,0,0]
@@ -478,10 +578,12 @@ function on_setup(scenario, options) {
 	G.units = [[],[]]
 	G.dead_units = [[],[]]
 
+	G.terrain = Array(64).fill(T_CLEAR)
+
 	G.active_unit = -1
 	G.starting_edges = [-1,-1]
 
-	G.is_space_legal = Array(64).fill(false)
+	G.is_space_legal = empty_board()
 
 	call("game")
 }
@@ -519,7 +621,7 @@ function on_view() {
 	if (R === G.active && G.is_space_legal) {
 		V.is_space_legal = G.is_space_legal
 	} else {
-		V.is_space_legal = Array(64).fill(false)
+		V.is_space_legal = empty_board()
 	}
 }
 

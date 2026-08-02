@@ -859,7 +859,7 @@ const data = module.exports = {
         ],
         [
             T_CLEAR, T_CLEAR, T_CLEAR, T_HILL,
-            T_CLEAR, T_CLEAR, T_CLEAR, T_CLEAR,
+            T_HILL, T_HILL, T_CLEAR, T_CLEAR,
             T_HILL, T_HILL, T_CLEAR, T_CLEAR,
             T_HILL, T_HILL, T_CLEAR, T_CLEAR,
         ],
